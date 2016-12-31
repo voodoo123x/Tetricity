@@ -22,6 +22,8 @@ namespace Tetricity
 		IList<CellEntity> _ActiveBlocks = new List<CellEntity>();
 		float _TimeLastTick;
 		float _TickCoolDown = 1000;
+		float _TimeLastMove;
+		float _MoveCoolDown = 100;
 
 		GameBoard()
 		{
@@ -49,76 +51,96 @@ namespace Tetricity
 				_TimeLastTick = (float)gameTime.TotalGameTime.TotalMilliseconds;
 			}
 
-			if (TickCycleCompleted(gameTime))
+			bool moveTickCompleted = TickCycleCompleted(gameTime, _TimeLastMove, _MoveCoolDown);
+			bool downTickCompleted = TickCycleCompleted(gameTime, _TimeLastTick, _TickCoolDown);
+			float totalTime = (float)gameTime.TotalGameTime.TotalMilliseconds;
+
+			if ((keysPressed.Contains(Keys.Down) && TickCycleCompleted(gameTime, _TimeLastMove, _MoveCoolDown / 2)) 
+			    || downTickCompleted)
 			{
-				if (keysPressed.Length <= 0 || keysPressed.Contains(Keys.Down))
+				if (moveTickCompleted) { _TimeLastMove = totalTime; }
+				if (downTickCompleted) { _TimeLastTick = totalTime; }
+
+				if (CanPerformMove(_ActiveBlocks, MoveType.Down))
 				{
-					if (CanPerformMove(_ActiveBlocks, MoveType.Down))
+					IEnumerable<CellEntity> temp = _ActiveBlocks.OrderByDescending(b => b.Y);
+					IList<CellEntity> newActiveBlocks = new List<CellEntity>();
+
+					foreach (var block in temp)
 					{
-						IEnumerable<CellEntity> temp = _ActiveBlocks.OrderByDescending(b => b.Y);
-						IList<CellEntity> newActiveBlocks = new List<CellEntity>();
+						int newX = block.X;
+						int newY = block.Y + 1;
 
-						foreach (var block in temp)
-						{
-							int newX = block.X;
-							int newY = block.Y + 1;
-
-							PerformMove(block.BlockType, block.X, block.Y, newX, newY);
-							newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, X = newX, Y = newY });
-						}
-
-						_ActiveBlocks = newActiveBlocks;
+						PerformMove(block.BlockType, block.X, block.Y, newX, newY);
+						newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, X = newX, Y = newY });
 					}
-					else
-					{
-						_ActiveBlocks.Clear();
-					}
+
+					_ActiveBlocks = newActiveBlocks;
 				}
-				else if (keysPressed.Contains(Keys.Left))
+				else
 				{
-					if (CanPerformMove(_ActiveBlocks, MoveType.Right))
-					{
-						IEnumerable<CellEntity> temp = _ActiveBlocks.OrderByDescending(b => b.Y);
-						IList<CellEntity> newActiveBlocks = new List<CellEntity>();
-
-						foreach (var block in temp)
-						{
-							int newX = block.X - 1;
-							int newY = block.Y;
-
-							PerformMove(block.BlockType, block.X, block.Y, newX, newY);
-							newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, X = newX, Y = newY });
-						}
-
-						_ActiveBlocks = newActiveBlocks;
-					}
-					else
-					{
-						_ActiveBlocks.Clear();
-					}
+					_ActiveBlocks.Clear();
 				}
-				else if (keysPressed.Contains(Keys.Right))
+			}
+
+			if (keysPressed.Contains(Keys.Left) && moveTickCompleted)
+			{
+				_TimeLastMove = totalTime;
+
+				if (CanPerformMove(_ActiveBlocks, MoveType.Left))
 				{
-					if (CanPerformMove(_ActiveBlocks, MoveType.Right))
+					IEnumerable<CellEntity> temp = _ActiveBlocks.OrderByDescending(b => b.Y);
+					IList<CellEntity> newActiveBlocks = new List<CellEntity>();
+
+					foreach (var block in temp)
 					{
-						IEnumerable<CellEntity> temp = _ActiveBlocks.OrderByDescending(b => b.Y);
-						IList<CellEntity> newActiveBlocks = new List<CellEntity>();
+						int newX = block.X - 1;
+						int newY = block.Y;
 
-						foreach (var block in temp)
-						{
-							int newX = block.X + 1;
-							int newY = block.Y;
-
-							PerformMove(block.BlockType, block.X, block.Y, newX, newY);
-							newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, X = newX, Y = newY });
-						}
-
-						_ActiveBlocks = newActiveBlocks;
+						PerformMove(block.BlockType, block.X, block.Y, newX, newY);
+						newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, X = newX, Y = newY });
 					}
-					else
+
+					_ActiveBlocks = newActiveBlocks;
+				}
+			}
+
+			if (keysPressed.Contains(Keys.Right) && moveTickCompleted)
+			{
+				_TimeLastMove = totalTime; 
+
+				if (CanPerformMove(_ActiveBlocks, MoveType.Right))
+				{
+					IEnumerable<CellEntity> temp = _ActiveBlocks.OrderByDescending(b => b.Y);
+					IList<CellEntity> newActiveBlocks = new List<CellEntity>();
+
+					foreach (var block in temp)
 					{
-						_ActiveBlocks.Clear();
+						int newX = block.X + 1;
+						int newY = block.Y;
+
+						PerformMove(block.BlockType, block.X, block.Y, newX, newY);
+						newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, X = newX, Y = newY });
 					}
+
+					_ActiveBlocks = newActiveBlocks;
+				}
+			}
+
+			if (keysPressed.Contains(Keys.Up) && moveTickCompleted)
+			{
+				_TimeLastMove = totalTime; 
+
+				// TODO: Add rotation method call here.
+			}
+
+			foreach (var block in _ActiveBlocks)
+			{
+				if (_Board[block.X, block.Y].GetBlockType() != block.BlockType)
+				{
+					int x = (block.X * _BlockWidth) + _XLocation;
+					int y = (block.Y * _BlockHeight) + _YLocation;
+					_Board[block.X, block.Y] = new Block(block.BlockType, _BlockWidth, _BlockHeight, x, y);
 				}
 			}
 		}
@@ -205,15 +227,14 @@ namespace Tetricity
 			return newFormation;
 		}
 
-		bool TickCycleCompleted(GameTime gameTime)
+		bool TickCycleCompleted(GameTime gameTime, float timeLastTick, float tickCoolDown)
 		{
 			bool tickCompleted = false;
 			float totalGameTime = (float)gameTime.TotalGameTime.TotalMilliseconds;
-			float nextTick = _TimeLastTick + _TickCoolDown;
+			float nextTick = timeLastTick + tickCoolDown;
 
 			if (_TimeLastTick <= 0 || nextTick < totalGameTime)
 			{
-				_TimeLastTick = totalGameTime;
 				tickCompleted = true;
 			}
 
@@ -243,7 +264,7 @@ namespace Tetricity
 						int newX = cell.X;
 						int newY = cell.Y + 1;
 
-						if (newX < _BoardWidth && newX >= 0 && newY <= _BoardHeight)
+						if (newX < _BoardWidth && newX > 1 && newY <= _BoardHeight)
 						{
 							if (_Board[newX, newY].GetBlockType() == BlockType.Empty 
 							    || activeCells.Any(c => c.X == newX && c.Y == newY))
@@ -265,7 +286,7 @@ namespace Tetricity
 						int newX = cell.X - 1;
 						int newY = cell.Y;
 
-						if (newX < _BoardWidth && newX >= 0 && newY <= _BoardHeight)
+						if (newX < _BoardWidth && newX > 1 && newY <= _BoardHeight)
 						{
 							if (_Board[newX, newY].GetBlockType() == BlockType.Empty
 								|| activeCells.Any(c => c.X == newX && c.Y == newY))
@@ -287,7 +308,7 @@ namespace Tetricity
 						int newX = cell.X + 1;
 						int newY = cell.Y;
 
-						if (newX < _BoardWidth && newX >= 0 && newY <= _BoardHeight)
+						if (newX < _BoardWidth && newX > 1 && newY <= _BoardHeight)
 						{
 							if (_Board[newX, newY].GetBlockType() == BlockType.Empty
 								|| activeCells.Any(c => c.X == newX && c.Y == newY))
