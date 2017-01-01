@@ -27,7 +27,7 @@ namespace Tetricity
 			Random random = new Random(DateTime.Now.Millisecond);
 			BlockType blockType = BlockType.Empty;
 
-			switch (random.Next(0, 4))
+			switch (random.Next(0, 5))
 			{
 				case 0: // Line
 					blockType = BlockType.Blue;
@@ -59,6 +59,14 @@ namespace Tetricity
 					newFormation.Add(new CellEntity { BlockType = blockType, Orientation = FormationOrientation.Vertical1, X = 6, Y = 1 });
 					newFormation.Add(new CellEntity { BlockType = blockType, Orientation = FormationOrientation.Vertical1, X = 5, Y = 0 });
 					newFormation.Add(new CellEntity { BlockType = blockType, Orientation = FormationOrientation.Vertical1, X = 5, Y = 1 });
+					break;
+
+				case 4: // T Shape
+					blockType = BlockType.Yellow;
+					newFormation.Add(new CellEntity { BlockType = blockType, Orientation = FormationOrientation.Vertical1, X = 5, Y = 0 });
+					newFormation.Add(new CellEntity { BlockType = blockType, Orientation = FormationOrientation.Vertical1, X = 6, Y = 0 });
+					newFormation.Add(new CellEntity { BlockType = blockType, Orientation = FormationOrientation.Vertical1, X = 7, Y = 0 });
+					newFormation.Add(new CellEntity { BlockType = blockType, Orientation = FormationOrientation.Vertical1, X = 6, Y = 1 });
 					break;
 			}
 
@@ -518,6 +526,7 @@ namespace Tetricity
 									newY = activeCells[i].Y - 1;
 									break;
 							}
+
 						}
 
 						if (newX > 0 && newX < board.GetLength(0) - 1 && newY > 0 && newY < board.GetLength(1) - 1)
@@ -543,6 +552,146 @@ namespace Tetricity
 								}
 
 								newCells.Add(new CellEntity { BlockType = BlockType.Red, Orientation = orientation, X = newX, Y = newY });
+							}
+						}
+						else
+						{
+							canRotate = false;
+							break;
+						}
+					}
+
+					break;
+
+				case BlockType.Yellow:  // T Shape
+					for (int i = 0; i < activeCells.Count; i++)
+					{
+						int newX = 0, newY = 0;
+
+						if (activeCells[i].Orientation == FormationOrientation.Vertical1)
+						{
+							switch (i)
+							{
+								case 0:
+									newX = activeCells[i].X - 1;
+									newY = activeCells[i].Y - 1;
+									break;
+
+								case 1:
+									newX = activeCells[i].X + 1;
+									newY = activeCells[i].Y - 1;
+									break;
+
+								case 2:
+									newX = activeCells[i].X;
+									newY = activeCells[i].Y;
+									break;
+
+								case 3:
+									newX = activeCells[i].X - 1;
+									newY = activeCells[i].Y + 1;
+									break;
+							}
+						}
+						else if (activeCells[i].Orientation == FormationOrientation.Horizontal2)
+						{
+							switch (i)
+							{
+								case 0:
+									newX = activeCells[i].X + 1;
+									newY = activeCells[i].Y - 1;
+									break;
+
+								case 1:
+									newX = activeCells[i].X + 1;
+									newY = activeCells[i].Y + 1;
+									break;
+
+								case 2:
+									newX = activeCells[i].X;
+									newY = activeCells[i].Y;
+									break;
+
+								case 3:
+									newX = activeCells[i].X - 1;
+									newY = activeCells[i].Y - 1;
+									break;
+							}
+						}
+						else if (activeCells[i].Orientation == FormationOrientation.Vertical2)
+						{
+							switch (i)
+							{
+								case 0:
+									newX = activeCells[i].X + 1;
+									newY = activeCells[i].Y + 1;
+									break;
+
+								case 1:
+									newX = activeCells[i].X - 1;
+									newY = activeCells[i].Y + 1;
+									break;
+
+								case 2:
+									newX = activeCells[i].X;
+									newY = activeCells[i].Y;
+									break;
+
+								case 3:
+									newX = activeCells[i].X + 1;
+									newY = activeCells[i].Y - 1;
+									break;
+							}
+						}
+						else if (activeCells[i].Orientation == FormationOrientation.Horizontal1)
+						{
+							switch (i)
+							{
+								case 0:
+									newX = activeCells[i].X - 1;
+									newY = activeCells[i].Y + 1;
+									break;
+
+								case 1:
+									newX = activeCells[i].X - 1;
+									newY = activeCells[i].Y - 1;
+									break;
+
+								case 2:
+									newX = activeCells[i].X;
+									newY = activeCells[i].Y;
+									break;
+
+								case 3:
+									newX = activeCells[i].X + 1;
+									newY = activeCells[i].Y + 1;
+									break;
+							}
+						}
+
+						if (newX > 0 && newX < board.GetLength(0) - 1 && newY > 0 && newY < board.GetLength(1) - 1)
+						{
+							if (board[newX, newY].GetBlockType() == BlockType.Empty || activeCells.Any(c => c.X == newX && c.Y == newY))
+							{
+								FormationOrientation orientation = FormationOrientation.Horizontal1;
+								if (activeCells[i].Orientation == FormationOrientation.Horizontal1)
+								{
+									orientation = FormationOrientation.Vertical1;
+								}
+								else if (activeCells[i].Orientation == FormationOrientation.Vertical1)
+								{
+									orientation = FormationOrientation.Horizontal2;
+								}
+								else if (activeCells[i].Orientation == FormationOrientation.Horizontal2)
+								{
+									orientation = FormationOrientation.Vertical2;
+								}
+								else if (activeCells[i].Orientation == FormationOrientation.Vertical2)
+								{
+									orientation = FormationOrientation.Horizontal1;
+								}
+
+								newCells.Add(new CellEntity { BlockType = BlockType.Yellow, Orientation = orientation, X = newX, Y = newY });
 							}
 						}
 						else

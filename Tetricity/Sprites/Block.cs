@@ -40,6 +40,10 @@ namespace Tetricity
 					_Texture = TetricityGame.TextureRedBlock;
 					break;
 
+				case BlockType.Yellow:
+					_Texture = TetricityGame.TextureYellowBlock;
+					break;
+
 				case BlockType.Empty:
 					for (int i = 0; i < blockColor.Length; i++)
 					{
