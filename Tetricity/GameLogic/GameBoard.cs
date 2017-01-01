@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -16,19 +15,20 @@ namespace Tetricity
 		readonly int _BlockHeight = 75;
 		readonly int _XLocation = 0;
 		readonly int _YLocation = 0;
-		int _score;
-		Difficulty _Difficulty = Difficulty.Easy;
+		int _Score;
 		IBlock[,] _Board = new Block[_BoardWidth, _BoardHeight];
 		IList<CellEntity> _ActiveBlocks = new List<CellEntity>();
 		float _TimeLastTick;
 		float _TickCoolDown = 1000;
 		float _TimeLastMove;
 		float _MoveCoolDown = 100;
+		float _TimeLastRotation;
+		float _RotationCoolDown = 200;
 
 		GameBoard()
 		{
-			Reset();
-	    }  
+			BoardOperations.Instance.Reset(ref _Board, _BoardWidth, _BoardHeight, _BlockWidth, _BlockHeight, _XLocation, _YLocation, out _Score);
+		}  
 
 		public static GameBoard Instance
 		{
@@ -47,23 +47,39 @@ namespace Tetricity
 		{
 			if (_ActiveBlocks.Count <= 0)
 			{
-				_ActiveBlocks = GenerateNewFormation();
+				_ActiveBlocks = FormationOperations.Instance.GenerateNewFormation(ref _Board, _BlockWidth, _BlockHeight);
+				_ActiveBlocks = _ActiveBlocks.OrderByDescending(b => b.Y).ThenBy(b => b.X).ToList();
 				_TimeLastTick = (float)gameTime.TotalGameTime.TotalMilliseconds;
 			}
 
-			bool moveTickCompleted = TickCycleCompleted(gameTime, _TimeLastMove, _MoveCoolDown);
-			bool downTickCompleted = TickCycleCompleted(gameTime, _TimeLastTick, _TickCoolDown);
+			IEnumerable<int> completedRows = BoardOperations.Instance.CheckRowsCompleted(ref _Board);
+
+			if (completedRows.Count() > 0)
+			{
+				_ActiveBlocks.Clear();
+
+				foreach (var row in completedRows)
+				{
+					_Score += BoardOperations.Instance.RemoveRow(ref _Board, row, _BlockWidth, _BlockHeight, _XLocation, _YLocation);
+				}
+
+				return;
+			}
+
+			bool moveTickCompleted = GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastMove, _MoveCoolDown);
+			bool downTickCompleted = GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastTick, _TickCoolDown);
+			bool rotationTickCompleted = GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastRotation, _RotationCoolDown);
 			float totalTime = (float)gameTime.TotalGameTime.TotalMilliseconds;
 
-			if ((keysPressed.Contains(Keys.Down) && TickCycleCompleted(gameTime, _TimeLastMove, _MoveCoolDown / 2)) 
+			if ((keysPressed.Contains(Keys.Down) && GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastMove, _MoveCoolDown / 2)) 
 			    || downTickCompleted)
 			{
 				if (moveTickCompleted) { _TimeLastMove = totalTime; }
 				if (downTickCompleted) { _TimeLastTick = totalTime; }
 
-				if (CanPerformMove(_ActiveBlocks, MoveType.Down))
+				if (FormationOperations.Instance.CanPerformMove(ref _ActiveBlocks, ref _Board, MoveType.Down))
 				{
-					IEnumerable<CellEntity> temp = _ActiveBlocks.OrderByDescending(b => b.Y);
+					IEnumerable<CellEntity> temp = _ActiveBlocks;
 					IList<CellEntity> newActiveBlocks = new List<CellEntity>();
 
 					foreach (var block in temp)
@@ -71,8 +87,8 @@ namespace Tetricity
 						int newX = block.X;
 						int newY = block.Y + 1;
 
-						PerformMove(block.BlockType, block.X, block.Y, newX, newY);
-						newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, X = newX, Y = newY });
+						FormationOperations.Instance.PerformMove(ref _Board, block.BlockType, block.X, block.Y, newX, newY, _XLocation, _YLocation, _BlockWidth, _BlockHeight);
+						newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, Orientation = block.Orientation, X = newX, Y = newY });
 					}
 
 					_ActiveBlocks = newActiveBlocks;
@@ -87,9 +103,9 @@ namespace Tetricity
 			{
 				_TimeLastMove = totalTime;
 
-				if (CanPerformMove(_ActiveBlocks, MoveType.Left))
+				if (FormationOperations.Instance.CanPerformMove(ref _ActiveBlocks, ref _Board, MoveType.Left))
 				{
-					IEnumerable<CellEntity> temp = _ActiveBlocks.OrderByDescending(b => b.Y);
+					IEnumerable<CellEntity> temp = _ActiveBlocks;
 					IList<CellEntity> newActiveBlocks = new List<CellEntity>();
 
 					foreach (var block in temp)
@@ -97,8 +113,8 @@ namespace Tetricity
 						int newX = block.X - 1;
 						int newY = block.Y;
 
-						PerformMove(block.BlockType, block.X, block.Y, newX, newY);
-						newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, X = newX, Y = newY });
+						FormationOperations.Instance.PerformMove(ref _Board, block.BlockType, block.X, block.Y, newX, newY, _XLocation, _YLocation, _BlockWidth, _BlockHeight);
+						newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, Orientation = block.Orientation, X = newX, Y = newY });
 					}
 
 					_ActiveBlocks = newActiveBlocks;
@@ -109,9 +125,9 @@ namespace Tetricity
 			{
 				_TimeLastMove = totalTime; 
 
-				if (CanPerformMove(_ActiveBlocks, MoveType.Right))
+				if (FormationOperations.Instance.CanPerformMove(ref _ActiveBlocks, ref _Board, MoveType.Right))
 				{
-					IEnumerable<CellEntity> temp = _ActiveBlocks.OrderByDescending(b => b.Y);
+					IEnumerable<CellEntity> temp = _ActiveBlocks;
 					IList<CellEntity> newActiveBlocks = new List<CellEntity>();
 
 					foreach (var block in temp)
@@ -119,19 +135,19 @@ namespace Tetricity
 						int newX = block.X + 1;
 						int newY = block.Y;
 
-						PerformMove(block.BlockType, block.X, block.Y, newX, newY);
-						newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, X = newX, Y = newY });
+						FormationOperations.Instance.PerformMove(ref _Board, block.BlockType, block.X, block.Y, newX, newY, _XLocation, _YLocation, _BlockWidth, _BlockHeight);
+						newActiveBlocks.Add(new CellEntity { BlockType = block.BlockType, Orientation = block.Orientation, X = newX, Y = newY });
 					}
 
 					_ActiveBlocks = newActiveBlocks;
 				}
 			}
 
-			if (keysPressed.Contains(Keys.Up) && moveTickCompleted)
+			if (keysPressed.Contains(Keys.Up) && rotationTickCompleted)
 			{
-				_TimeLastMove = totalTime; 
+				_TimeLastRotation = totalTime;
 
-				// TODO: Add rotation method call here.
+				FormationOperations.Instance.RotateFormation(ref _Board, ref _ActiveBlocks, _XLocation, _YLocation, _BlockWidth, _BlockHeight);
 			}
 
 			foreach (var block in _ActiveBlocks)
@@ -155,210 +171,5 @@ namespace Tetricity
 				}
 			}
 		}
-
-		void Reset()
-		{
-			for (int i = 0; i < _BoardWidth; i++)
-			{
-				for (int j = 0; j < _BoardHeight; j++)
-				{
-					BlockType blockType = BlockType.Empty;
-
-					if (i == 0 || i == _BoardWidth - 1 || j == _BoardHeight - 1)
-					{
-						blockType = BlockType.Wall;
-					}
-
-					int x = (i * _BlockWidth) + _XLocation;
-					int y = (j * _BlockHeight) + _YLocation;
-					_Board[i, j] = new Block(blockType, _BlockHeight, _BlockWidth, x, y);
-				}
-			}
-
-			_score = 0;
-		}
-
-		IList<CellEntity> GenerateNewFormation()
-		{
-			IList<CellEntity> newFormation = new List<CellEntity>();
-			Random random = new Random();
-			BlockType blockType = BlockType.Empty;
-
-			switch (random.Next(0, 4))
-			{
-				case 0:	// Line
-					blockType = BlockType.Blue;
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 0 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 1 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 2 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 3 });
-					break;
-					
-				case 1:	// Left L
-					blockType = BlockType.Red;
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 0 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 1 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 2 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 5, Y = 2 });
-					break;
-					
-				case 2: // Right L
-					blockType = BlockType.Purple;
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 0 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 1 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 2 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 7, Y = 2 });
-					break;	
-					
-				case 3: // Square
-					blockType = BlockType.Green;
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 0 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 6, Y = 1 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 5, Y = 0 });
-					newFormation.Add(new CellEntity { BlockType = blockType, X = 5, Y = 1 });
-					break;
-			}
-
-			foreach (var block in newFormation)
-			{
-				_Board[block.X, block.Y] = new Block(blockType, _BlockWidth, _BlockHeight, 6 * _BlockWidth, 0);
-			}
-
-			return newFormation;
-		}
-
-		bool TickCycleCompleted(GameTime gameTime, float timeLastTick, float tickCoolDown)
-		{
-			bool tickCompleted = false;
-			float totalGameTime = (float)gameTime.TotalGameTime.TotalMilliseconds;
-			float nextTick = timeLastTick + tickCoolDown;
-
-			if (_TimeLastTick <= 0 || nextTick < totalGameTime)
-			{
-				tickCompleted = true;
-			}
-
-			return tickCompleted;
-		}
-
-		void PerformMove(BlockType blockType, int oldX, int oldY, int newX, int newY)
-		{
-			int x = (oldX * _BlockWidth) + _XLocation;
-			int y = (oldY * _BlockHeight) + _YLocation;
-			_Board[oldX, oldY] = new Block(BlockType.Empty, _BlockWidth, _BlockHeight, x, y);
-
-			x = (newX * _BlockWidth) + _XLocation;
-			y = (newY * _BlockHeight) + _YLocation;
-			_Board[newX, newY] = new Block(blockType, _BlockWidth, _BlockHeight, x, y);
-		}
-
-		bool CanPerformMove(IList<CellEntity> activeCells, MoveType moveType)
-		{
-			bool canMove = false;
-
-			switch (moveType)
-			{
-				case MoveType.Down:
-					foreach (var cell in activeCells)
-					{
-						int newX = cell.X;
-						int newY = cell.Y + 1;
-
-						if (newX < _BoardWidth && newX > 1 && newY <= _BoardHeight)
-						{
-							if (_Board[newX, newY].GetBlockType() == BlockType.Empty 
-							    || activeCells.Any(c => c.X == newX && c.Y == newY))
-							{
-								canMove = true;
-							}
-							else 
-							{
-								canMove = false;
-								break;
-							}
-						}
-					}
-					break;
-
-				case MoveType.Left:
-					foreach (var cell in activeCells)
-					{
-						int newX = cell.X - 1;
-						int newY = cell.Y;
-
-						if (newX < _BoardWidth && newX > 1 && newY <= _BoardHeight)
-						{
-							if (_Board[newX, newY].GetBlockType() == BlockType.Empty
-								|| activeCells.Any(c => c.X == newX && c.Y == newY))
-							{
-								canMove = true;
-							}
-							else
-							{
-								canMove = false;
-								break;
-							}
-						}
-					}
-					break;
-				
-				case MoveType.Right:
-					foreach (var cell in activeCells)
-					{
-						int newX = cell.X + 1;
-						int newY = cell.Y;
-
-						if (newX < _BoardWidth && newX > 1 && newY <= _BoardHeight)
-						{
-							if (_Board[newX, newY].GetBlockType() == BlockType.Empty
-								|| activeCells.Any(c => c.X == newX && c.Y == newY))
-							{
-								canMove = true;
-							}
-							else
-							{
-								canMove = false;
-								break;
-							}
-						}
-					}
-					break;
-			}
-
-			return canMove;
-		}
-	}
-
-	public class CellEntity
-	{
-		public BlockType BlockType { get; set; }
-		public int X { get; set; }
-		public int Y { get; set; }
-	}
-
-	public enum BlockType
-	{
-		Blue,
-		Empty,
-		Green,
-		Purple,
-		Red,
-		Yellow,
-		Wall
-	}
-
-	public enum Difficulty
-	{
-		Easy,
-		Medium,
-		Hard
-	}
-
-	public enum MoveType
-	{
-		Down,
-		Left,
-		Right,
-		Up
 	}
 }

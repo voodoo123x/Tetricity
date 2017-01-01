@@ -43,6 +43,16 @@
     <Compile Include="GameLogic\GameBoard.cs" />
     <Compile Include="Sprites\Interfaces\IBlock.cs" />
     <Compile Include="Sprites\Block.cs" />
+    <Compile Include="GameLogic\FormationOperations.cs" />
+    <Compile Include="GameLogic\Interfaces\IFormationOperations.cs" />
+    <Compile Include="GameLogic\Entities\CellEntity.cs" />
+    <Compile Include="GameLogic\Enums\BlockType.cs" />
+    <Compile Include="GameLogic\Enums\MoveType.cs" />
+    <Compile Include="GameLogic\Enums\FormationOrientation.cs" />
+    <Compile Include="GameLogic\Interfaces\IBoardOperations.cs" />
+    <Compile Include="GameLogic\Interfaces\IGameOperations.cs" />
+    <Compile Include="GameLogic\BoardOperations.cs" />
+    <Compile Include="GameLogic\GameOperations.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png" />
@@ -92,6 +102,9 @@
     <Folder Include="Sprites\" />
     <Folder Include="Sprites\Interfaces\" />
     <Folder Include="GameLogic\" />
+    <Folder Include="GameLogic\Interfaces\" />
+    <Folder Include="GameLogic\Enums\" />
+    <Folder Include="GameLogic\Entities\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MonoGame\v3.0\MonoGame.Content.Builder.targets" />
