@@ -19,37 +19,25 @@ namespace Tetricity
 			_Width = width;
 			_XLocation = xLocation;
 			_YLocation = yLocation;
-			_Texture = new Texture2D(TetricityGame.graphics.GraphicsDevice, _Width, _Height);
+			_Texture = new Texture2D(TetricityGame.Graphics.GraphicsDevice, _Width, _Height);
 			Color[] blockColor = new Color[_Width * _Height];
 
 			switch (_BlockType)
 			{
 				case BlockType.Blue:
-					for (int i = 0; i < blockColor.Length; i++)
-					{
-						blockColor[i] = Color.Blue;
-					}
+					_Texture = TetricityGame.TextureBlueBlock;
 					break;
 
 				case BlockType.Green:
-					for (int i = 0; i < blockColor.Length; i++)
-					{
-						blockColor[i] = Color.Green;
-					}
+					_Texture = TetricityGame.TextureGreenBlock;
 					break;
 					
 				case BlockType.Purple:
-					for (int i = 0; i < blockColor.Length; i++)
-					{
-						blockColor[i] = Color.Purple;
-					}
+					_Texture = TetricityGame.TexturePurpleBlock;
 					break;
 
 				case BlockType.Red:
-					for (int i = 0; i < blockColor.Length; i++)
-					{
-						blockColor[i] = Color.Red;
-					}
+					_Texture = TetricityGame.TextureRedBlock;
 					break;
 
 				case BlockType.Empty:
@@ -57,22 +45,21 @@ namespace Tetricity
 					{
 						blockColor[i] = Color.Transparent;
 					}
+					_Texture.SetData(blockColor);
 					break;
 					
 				case BlockType.Wall:
-					for (int i = 0; i < blockColor.Length; i++)
-					{
-						blockColor[i] = Color.WhiteSmoke;
-					}
+					_Texture = TetricityGame.TextureGreyBlock;
 					break;
 			}
-
-			_Texture.SetData(blockColor);
 		}
 
 		public void Draw(SpriteBatch spriteBatch)
 		{
-			spriteBatch.Draw(_Texture, new Vector2(_XLocation, _YLocation));
+			if (_BlockType == BlockType.Empty)
+				spriteBatch.Draw(_Texture, new Vector2(_XLocation, _YLocation));
+			else
+				spriteBatch.Draw(_Texture, new Vector2(_XLocation + 2, _YLocation + 2), null, Color.White, 0f, Vector2.Zero, 2.2f, SpriteEffects.None, 0f);
 		}
 
 		public BlockType GetBlockType()

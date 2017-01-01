@@ -25,6 +25,7 @@ namespace Tetricity
 		float _TimeLastRotation;
 		float _RotationCoolDown = 200;
 		int _RowsCompleted = 0;
+		bool _GamePaused = false;
 
 		GameBoard()
 		{
@@ -46,32 +47,31 @@ namespace Tetricity
 
 		public void Update(Keys[] keysPressed, GameTime gameTime)
 		{
+			bool moveTickCompleted = GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastMove, _MoveCoolDown);
+			bool downTickCompleted = GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastTick, _TickCoolDown);
+			bool rotationTickCompleted = GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastRotation, _RotationCoolDown);
+			float totalTime = (float)gameTime.TotalGameTime.TotalMilliseconds;
+
+			if (keysPressed.Contains(Keys.Space) && moveTickCompleted)
+			{
+				_TimeLastMove = totalTime;
+				_GamePaused = _GamePaused == false;
+			}
+
+			if (_GamePaused)
+			{
+				return;
+			}
+
+			if (_ActiveBlocks.Count <= 0)
+				CheckCompletedRows();
+
 			if (_ActiveBlocks.Count <= 0)
 			{
 				_ActiveBlocks = FormationOperations.Instance.GenerateNewFormation(ref _Board, _BlockWidth, _BlockHeight);
 				_ActiveBlocks = _ActiveBlocks.OrderByDescending(b => b.Y).ThenBy(b => b.X).ToList();
 				_TimeLastTick = (float)gameTime.TotalGameTime.TotalMilliseconds;
 			}
-
-			IEnumerable<int> completedRows = BoardOperations.Instance.CheckRowsCompleted(ref _Board);
-
-			if (completedRows.Count() > 0)
-			{
-				_ActiveBlocks.Clear();
-
-				foreach (var row in completedRows)
-				{
-					_Score += BoardOperations.Instance.RemoveRow(ref _Board, row, _BlockWidth, _BlockHeight, _XLocation, _YLocation);
-					_RowsCompleted++;
-				}
-
-				return;
-			}
-
-			bool moveTickCompleted = GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastMove, _MoveCoolDown);
-			bool downTickCompleted = GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastTick, _TickCoolDown);
-			bool rotationTickCompleted = GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastRotation, _RotationCoolDown);
-			float totalTime = (float)gameTime.TotalGameTime.TotalMilliseconds;
 
 			if ((keysPressed.Contains(Keys.Down) && GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastMove, _MoveCoolDown / 2)) 
 			    || downTickCompleted)
@@ -171,6 +171,40 @@ namespace Tetricity
 				{
 					_Board[i, j].Draw(spriteBatch);
 				}
+			}
+
+			string displayScore = string.Format("Score: {0}", _Score);
+			spriteBatch.DrawString(TetricityGame.FontInterface, displayScore, new Vector2(950, 50), Color.WhiteSmoke);
+			string displayRowsCompleted = string.Format("Rows Filled: {0}", _RowsCompleted);
+			spriteBatch.DrawString(TetricityGame.FontInterface, displayRowsCompleted, new Vector2(950, 150), Color.WhiteSmoke);
+
+			if (_GamePaused)
+			{
+				spriteBatch.DrawString(TetricityGame.FontPaused, "** PAUSED **", new Vector2(150, 700), Color.WhiteSmoke);
+			}
+		}
+
+		// TODO: Move this method to BoardOperations
+		void CheckCompletedRows()
+		{
+			IEnumerable<int> completedRows = BoardOperations.Instance.CheckRowsCompleted(ref _Board);
+
+			if (completedRows.Count() > 0)
+			{
+				int pointsScored = 0;
+				int row = completedRows.First();
+
+				while (row >= 0)
+				{
+					pointsScored += BoardOperations.Instance.RemoveRow(ref _Board, row, _BlockWidth, _BlockHeight, _XLocation, _YLocation);
+					_RowsCompleted++;
+
+					row = BoardOperations.Instance.CheckRowsCompleted(ref _Board).First();
+				}
+
+				_Score += pointsScored * completedRows.Count();
+
+				return;
 			}
 		}
 	}

@@ -62,6 +62,11 @@ namespace Tetricity
 				}
 			}
 
+			if (completedRows.Count == 0)
+			{
+				completedRows.Add(-1);
+			}
+
 			return completedRows.OrderByDescending(r => r);
 		}
 

@@ -9,15 +9,24 @@ namespace Tetricity
 	/// </summary>
 	public class TetricityGame : Game
 	{
-		public static GraphicsDeviceManager graphics;
-		SpriteBatch spriteBatch;
+		public static GraphicsDeviceManager Graphics;
+		public static SpriteFont FontInterface;
+		public static SpriteFont FontPaused;
+		public static Texture2D TextureBlueBlock;
+		public static Texture2D TextureGreenBlock;
+		public static Texture2D TextureGreyBlock;
+		public static Texture2D TexturePurpleBlock;
+		public static Texture2D TextureRedBlock;
+		public static Texture2D TextureYellowBlock;
 
+		SpriteBatch _SpriteBatch;
+		
 		public TetricityGame()
 		{
-			graphics = new GraphicsDeviceManager(this);
-			graphics.PreferredBackBufferWidth = 1600;
-			graphics.PreferredBackBufferHeight = 1500;
-			graphics.ApplyChanges();
+			Graphics = new GraphicsDeviceManager(this);
+			Graphics.PreferredBackBufferWidth = 1600;
+			Graphics.PreferredBackBufferHeight = 1500;
+			Graphics.ApplyChanges();
 
 			Content.RootDirectory = "Content";
 		}
@@ -41,9 +50,17 @@ namespace Tetricity
 		protected override void LoadContent()
 		{
 			// Create a new SpriteBatch, which can be used to draw textures.
-			spriteBatch = new SpriteBatch(GraphicsDevice);
+			_SpriteBatch = new SpriteBatch(GraphicsDevice);
 
 			//TODO: use this.Content to load your game content here 
+			FontInterface = Content.Load<SpriteFont>("FontInterface");
+			FontPaused = Content.Load<SpriteFont>("FontPaused");
+			TextureBlueBlock = Content.Load<Texture2D>("Blocks/element_blue_square");
+			TextureGreenBlock = Content.Load<Texture2D>("Blocks/element_green_square");
+			TextureGreyBlock = Content.Load<Texture2D>("Blocks/element_grey_square");
+			TexturePurpleBlock = Content.Load<Texture2D>("Blocks/element_purple_square");
+			TextureRedBlock = Content.Load<Texture2D>("Blocks/element_red_square");
+			TextureYellowBlock = Content.Load<Texture2D>("Blocks/element_yellow_square");
 		}
 
 		/// <summary>
@@ -73,14 +90,14 @@ namespace Tetricity
 		protected override void Draw(GameTime gameTime)
 		{
 			var backgroundColor = new Color(72, 74, 76);
-			graphics.GraphicsDevice.Clear(backgroundColor);
+			Graphics.GraphicsDevice.Clear(backgroundColor);
 
-			spriteBatch.Begin();
+			_SpriteBatch.Begin();
 
 			//TODO: Add your drawing code here
-			GameBoard.Instance.Draw(spriteBatch);
+			GameBoard.Instance.Draw(_SpriteBatch);
 
-			spriteBatch.End();
+			_SpriteBatch.End();
 
 			base.Draw(gameTime);
 		}
