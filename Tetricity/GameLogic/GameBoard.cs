@@ -24,10 +24,11 @@ namespace Tetricity
 		float _MoveCoolDown = 100;
 		float _TimeLastRotation;
 		float _RotationCoolDown = 200;
+		int _RowsCompleted = 0;
 
 		GameBoard()
 		{
-			BoardOperations.Instance.Reset(ref _Board, _BoardWidth, _BoardHeight, _BlockWidth, _BlockHeight, _XLocation, _YLocation, out _Score);
+			BoardOperations.Instance.Reset(ref _Board, _BoardWidth, _BoardHeight, _BlockWidth, _BlockHeight, _XLocation, _YLocation, out _Score, out _RowsCompleted);
 		}  
 
 		public static GameBoard Instance
@@ -61,6 +62,7 @@ namespace Tetricity
 				foreach (var row in completedRows)
 				{
 					_Score += BoardOperations.Instance.RemoveRow(ref _Board, row, _BlockWidth, _BlockHeight, _XLocation, _YLocation);
+					_RowsCompleted++;
 				}
 
 				return;

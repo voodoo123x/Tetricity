@@ -262,7 +262,6 @@ namespace Tetricity
 									orientation = FormationOrientation.Horizontal1;
 								}
 
-
 								newCells.Add(new CellEntity { BlockType = BlockType.Blue, Orientation = orientation, X = newX, Y = newY });
 							}
 						}
@@ -403,7 +402,6 @@ namespace Tetricity
 									orientation = FormationOrientation.Horizontal1;
 								}
 
-
 								newCells.Add(new CellEntity { BlockType = BlockType.Purple, Orientation = orientation, X = newX, Y = newY });
 							}
 						}
@@ -543,7 +541,6 @@ namespace Tetricity
 								{
 									orientation = FormationOrientation.Horizontal1;
 								}
-
 
 								newCells.Add(new CellEntity { BlockType = BlockType.Red, Orientation = orientation, X = newX, Y = newY });
 							}

@@ -20,7 +20,7 @@ namespace Tetricity
 			}
 		}
 
-		public void Reset(ref IBlock[,] board, int boardWidth, int boardHeight, int blockWidth, int blockHeight, int boardX, int boardY, out int score)
+		public void Reset(ref IBlock[,] board, int boardWidth, int boardHeight, int blockWidth, int blockHeight, int boardX, int boardY, out int score, out int rowsCompleted)
 		{
 			for (int i = 0; i < boardWidth; i++)
 			{
@@ -40,6 +40,7 @@ namespace Tetricity
 			}
 
 			score = 0;
+			rowsCompleted = 0;
 		}
 
 		public IEnumerable<int> CheckRowsCompleted(ref IBlock[,] board)
