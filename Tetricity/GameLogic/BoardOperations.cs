@@ -101,5 +101,21 @@ namespace Tetricity
 
 			return score;
 		}
+
+		public bool IsGameOver(ref IBlock[,] board, IList<CellEntity> formation)
+		{
+			bool unableToPlace = false;
+
+			foreach (var cell in formation)
+			{
+				if (board[cell.X, cell.Y].GetBlockType() != BlockType.Empty)
+				{
+					unableToPlace = true;
+					break;
+				}
+			}
+
+			return unableToPlace;
+		}
 	}
 }

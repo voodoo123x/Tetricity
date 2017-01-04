@@ -26,6 +26,7 @@ namespace Tetricity
 		float _RotationCoolDown = 200;
 		int _RowsCompleted = 0;
 		bool _GamePaused = false;
+		bool _GameOver = false;
 
 		GameBoard()
 		{
@@ -52,13 +53,20 @@ namespace Tetricity
 			bool rotationTickCompleted = GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastRotation, _RotationCoolDown);
 			float totalTime = (float)gameTime.TotalGameTime.TotalMilliseconds;
 
-			if (keysPressed.Contains(Keys.Space) && moveTickCompleted)
+			if (keysPressed.Contains(Keys.Space) && moveTickCompleted && !_GameOver)
 			{
 				_TimeLastMove = totalTime;
 				_GamePaused = _GamePaused == false;
 			}
 
-			if (_GamePaused)
+			if (keysPressed.Contains(Keys.Enter) && _GameOver)
+			{
+				BoardOperations.Instance.Reset(ref _Board, _BoardWidth, _BoardHeight, _BlockWidth, _BlockHeight, _XLocation, _YLocation, out _Score, out _RowsCompleted);
+				_GameOver = false;
+				return;
+			}
+
+			if (_GamePaused || _GameOver)
 			{
 				return;
 			}
@@ -68,9 +76,15 @@ namespace Tetricity
 
 			if (_ActiveBlocks.Count <= 0)
 			{
-				_ActiveBlocks = FormationOperations.Instance.GenerateNewFormation(ref _Board, _BlockWidth, _BlockHeight);
+				_ActiveBlocks = FormationOperations.Instance.GenerateNewFormation(ref _Board, _BlockWidth, _BlockHeight, _XLocation, _YLocation);
 				_ActiveBlocks = _ActiveBlocks.OrderByDescending(b => b.Y).ThenBy(b => b.X).ToList();
 				_TimeLastTick = (float)gameTime.TotalGameTime.TotalMilliseconds;
+
+				if (_ActiveBlocks.Count <= 0)
+				{
+					_GameOver = true;
+					return;
+				}
 			}
 
 			if ((keysPressed.Contains(Keys.Down) && GameOperations.Instance.TickCycleCompleted(gameTime, _TimeLastMove, _MoveCoolDown / 2)) 
@@ -101,7 +115,7 @@ namespace Tetricity
 				}
 			}
 
-			if (keysPressed.Contains(Keys.Left) && moveTickCompleted)
+			if (keysPressed.Contains(Keys.Left) && !keysPressed.Contains(Keys.Up) && moveTickCompleted)
 			{
 				_TimeLastMove = totalTime;
 
@@ -123,7 +137,7 @@ namespace Tetricity
 				}
 			}
 
-			if (keysPressed.Contains(Keys.Right) && moveTickCompleted)
+			if (keysPressed.Contains(Keys.Right) && !keysPressed.Contains(Keys.Up) && moveTickCompleted)
 			{
 				_TimeLastMove = totalTime; 
 
@@ -181,6 +195,11 @@ namespace Tetricity
 			if (_GamePaused)
 			{
 				spriteBatch.DrawString(TetricityGame.FontPaused, "** PAUSED **", new Vector2(150, 700), Color.WhiteSmoke);
+			}
+
+			if (_GameOver)
+			{
+				spriteBatch.DrawString(TetricityGame.FontPaused, "GAME OVER!", new Vector2(140, 700), Color.WhiteSmoke);
 			}
 		}
 

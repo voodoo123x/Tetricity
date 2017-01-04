@@ -21,7 +21,7 @@ namespace Tetricity
 			}
 		}
 
-		public IList<CellEntity> GenerateNewFormation(ref IBlock[,] board, int blockWidth, int blockHeight)
+		public IList<CellEntity> GenerateNewFormation(ref IBlock[,] board, int blockWidth, int blockHeight, int boardX, int boardY)
 		{
 			IList<CellEntity> newFormation = new List<CellEntity>();
 			Random random = new Random(DateTime.Now.Millisecond);
@@ -70,9 +70,18 @@ namespace Tetricity
 					break;
 			}
 
-			foreach (var block in newFormation)
+			if (BoardOperations.Instance.IsGameOver(ref board, newFormation))
 			{
-				board[block.X, block.Y] = new Block(blockType, blockWidth, blockHeight, 6 * blockWidth, 0);
+				newFormation.Clear();
+			}
+			else
+			{
+				foreach (var block in newFormation)
+				{
+					int x = (block.X * blockWidth) + boardX;
+					int y = (block.Y * blockHeight) + boardY;
+					board[block.X, block.Y] = new Block(blockType, blockWidth, blockHeight, x, y);
+				}
 			}
 
 			return newFormation;
@@ -248,7 +257,7 @@ namespace Tetricity
 							}
 						}
 
-						if (newX > 0 && newX < board.GetLength(0) - 1 && newY > 0 && newY < board.GetLength(1) - 1)
+						if (newX > 0 && newX < board.GetLength(0) - 1 && newY >= 0 && newY < board.GetLength(1) - 1)
 						{
 							if (board[newX, newY].GetBlockType() == BlockType.Empty || activeCells.Any(c => c.X == newX && c.Y == newY))
 							{
@@ -388,7 +397,7 @@ namespace Tetricity
 							}
 						}
 
-						if (newX > 0 && newX < board.GetLength(0) - 1 && newY > 0 && newY < board.GetLength(1) - 1)
+						if (newX > 0 && newX < board.GetLength(0) - 1 && newY >= 0 && newY < board.GetLength(1) - 1)
 						{
 							if (board[newX, newY].GetBlockType() == BlockType.Empty || activeCells.Any(c => c.X == newX && c.Y == newY))
 							{
@@ -529,7 +538,7 @@ namespace Tetricity
 
 						}
 
-						if (newX > 0 && newX < board.GetLength(0) - 1 && newY > 0 && newY < board.GetLength(1) - 1)
+						if (newX > 0 && newX < board.GetLength(0) - 1 && newY >= 0 && newY < board.GetLength(1) - 1)
 						{
 							if (board[newX, newY].GetBlockType() == BlockType.Empty || activeCells.Any(c => c.X == newX && c.Y == newY))
 							{
@@ -669,7 +678,7 @@ namespace Tetricity
 							}
 						}
 
-						if (newX > 0 && newX < board.GetLength(0) - 1 && newY > 0 && newY < board.GetLength(1) - 1)
+						if (newX > 0 && newX < board.GetLength(0) - 1 && newY >= 0 && newY < board.GetLength(1) - 1)
 						{
 							if (board[newX, newY].GetBlockType() == BlockType.Empty || activeCells.Any(c => c.X == newX && c.Y == newY))
 							{
