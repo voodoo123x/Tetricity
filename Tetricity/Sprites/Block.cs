@@ -1,47 +1,43 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace Tetricity
 {
-	public class Block : IBlock
+	public class Block : BaseSprite, IBlock
 	{
 		BlockType _BlockType;
-		Texture2D _Texture;
-		int _Height;
-		int _Width;
-		int _XLocation;
-		int _YLocation;
 
 		public Block(BlockType blockType, int width, int height, int xLocation, int yLocation)
 		{
 			_BlockType = blockType;
-			_Height = height;
-			_Width = width;
-			_XLocation = xLocation;
-			_YLocation = yLocation;
-			_Texture = new Texture2D(TetricityGame.Graphics.GraphicsDevice, _Width, _Height);
-			Color[] blockColor = new Color[_Width * _Height];
+			this.height = height;
+			this.width = width;
+			this.xLocation = xLocation;
+			this.yLocation = yLocation;
+			texture = new Texture2D(TetricityGame.Graphics.GraphicsDevice, this.width, this.height);
+			Color[] blockColor = new Color[this.width * this.height];
 
 			switch (_BlockType)
 			{
 				case BlockType.Blue:
-					_Texture = TetricityGame.TextureBlueBlock;
+					texture = TetricityGame.TextureBlueBlock;
 					break;
 
 				case BlockType.Green:
-					_Texture = TetricityGame.TextureGreenBlock;
+					texture = TetricityGame.TextureGreenBlock;
 					break;
 					
 				case BlockType.Purple:
-					_Texture = TetricityGame.TexturePurpleBlock;
+					texture = TetricityGame.TexturePurpleBlock;
 					break;
 
 				case BlockType.Red:
-					_Texture = TetricityGame.TextureRedBlock;
+					texture = TetricityGame.TextureRedBlock;
 					break;
 
 				case BlockType.Yellow:
-					_Texture = TetricityGame.TextureYellowBlock;
+					texture = TetricityGame.TextureYellowBlock;
 					break;
 
 				case BlockType.Empty:
@@ -49,21 +45,26 @@ namespace Tetricity
 					{
 						blockColor[i] = Color.Transparent;
 					}
-					_Texture.SetData(blockColor);
+					texture.SetData(blockColor);
 					break;
 					
 				case BlockType.Wall:
-					_Texture = TetricityGame.TextureGreyBlock;
+					texture = TetricityGame.TextureGreyBlock;
 					break;
 			}
 		}
 
-		public void Draw(SpriteBatch spriteBatch)
+		public override void Update(Keys[] keysPressed, GameTime gameTime)
+		{
+			// No updating needed for blocks
+		}
+
+		public override void Draw(SpriteBatch spriteBatch)
 		{
 			if (_BlockType == BlockType.Empty)
-				spriteBatch.Draw(_Texture, new Vector2(_XLocation, _YLocation));
+				spriteBatch.Draw(texture, new Vector2(xLocation, yLocation));
 			else
-				spriteBatch.Draw(_Texture, new Vector2(_XLocation + 2, _YLocation + 2), null, Color.White, 0f, Vector2.Zero, 2.2f, SpriteEffects.None, 0f);
+				spriteBatch.Draw(texture, new Vector2(xLocation + 2, yLocation + 2), null, Color.White, 0f, Vector2.Zero, 2.2f, SpriteEffects.None, 0f);
 		}
 
 		public BlockType GetBlockType()

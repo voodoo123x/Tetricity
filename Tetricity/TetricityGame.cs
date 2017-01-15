@@ -89,7 +89,7 @@ namespace Tetricity
 		/// <param name="gameTime">Provides a snapshot of timing values.</param>
 		protected override void Draw(GameTime gameTime)
 		{
-			var backgroundColor = new Color(72, 74, 76);
+			Color backgroundColor = new Color(72, 74, 76);
 			Graphics.GraphicsDevice.Clear(backgroundColor);
 
 			_SpriteBatch.Begin();

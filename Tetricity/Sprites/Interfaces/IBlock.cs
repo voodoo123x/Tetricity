@@ -1,11 +1,7 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-
-namespace Tetricity
+﻿namespace Tetricity
 {
-	public interface IBlock
+	public interface IBlock : ISprite
 	{
-		void Draw(SpriteBatch spriteBatch);
-
 		BlockType GetBlockType();
 	}
 }

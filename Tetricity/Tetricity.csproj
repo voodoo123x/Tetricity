@@ -53,6 +53,8 @@
     <Compile Include="GameLogic\Interfaces\IGameOperations.cs" />
     <Compile Include="GameLogic\BoardOperations.cs" />
     <Compile Include="GameLogic\GameOperations.cs" />
+    <Compile Include="Sprites\BaseSprite.cs" />
+    <Compile Include="Sprites\Interfaces\ISprite.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png" />
